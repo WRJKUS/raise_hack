@@ -1,0 +1,3 @@
+# DevContainer configuration
+.devcontainer/devcontainer.json
+chroma_proposal_db/

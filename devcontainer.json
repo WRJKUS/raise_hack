@@ -1,0 +1,42 @@
+{
+  "name": "Python Jupyter Environment",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  // Features to add to the dev container
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Configure tool-specific properties
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-renderers",
+        "ms-toolsai.jupyter-keymap"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "jupyter.askForKernelRestart": false
+      }
+    }
+  },
+
+  // Use 'forwardPorts' to make a list of ports available locally
+  "forwardPorts": [8888],
+
+  // Environment variables
+  "containerEnv": {
+    "GROQ_API_KEY": "",
+    "OPENAI_API_KEY": ""
+  },
+
+  // Use 'postCreateCommand' to run commands after the container is created
+  "postCreateCommand": "python --version && pip --version && pip install --user jupyter notebook jupyterlab pandas numpy matplotlib seaborn scikit-learn black pylint ipykernel langgraph langchain langchain-core langchain-community langchain-openai langchain-groq langsmith && python -m ipykernel install --user --name=python3",
+
+  // Comment out to connect as root instead
+  "remoteUser": "vscode"
+}
