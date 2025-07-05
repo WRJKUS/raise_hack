@@ -1,0 +1,27 @@
+# Core Chainlit and LangGraph dependencies
+chainlit>=2.6.0
+langgraph>=0.5.1
+langchain>=0.3.26
+langchain-core>=0.3.68
+langchain-community>=0.3.27
+langchain-chroma>=0.2.4
+langchain-groq>=0.3.5
+langchain-openai>=0.3.27
+
+# Vector Database
+chromadb>=1.0.15
+
+# Utilities
+python-dotenv>=1.0.0
+aiofiles>=24.1.0
+python-multipart>=0.0.18
+
+# Document processing (for file upload support)
+PyPDF2>=3.0.1
+python-docx>=1.1.0
+markdown>=3.5.0
+
+# Development dependencies (optional)
+pytest>=7.4.0
+black>=23.0.0
+flake8>=6.0.0

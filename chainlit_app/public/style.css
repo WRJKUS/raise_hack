@@ -1,0 +1,299 @@
+/* Custom CSS for LangGraph Proposal Analyzer */
+
+/* Main container styling */
+.MuiContainer-root {
+    max-width: 1200px !important;
+}
+
+/* Header styling */
+.MuiAppBar-root {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+/* Chat message styling */
+.message {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.message.user {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    margin-left: 2rem;
+}
+
+.message.assistant {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    margin-right: 2rem;
+}
+
+/* Button styling */
+.MuiButton-root {
+    border-radius: 8px !important;
+    text-transform: none !important;
+    font-weight: 500 !important;
+}
+
+.MuiButton-containedPrimary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
+}
+
+.MuiButton-containedPrimary:hover {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6) !important;
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+/* Input field styling */
+.MuiTextField-root {
+    margin-bottom: 1rem !important;
+}
+
+.MuiOutlinedInput-root {
+    border-radius: 8px !important;
+}
+
+.MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #667eea !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+    border-color: #667eea !important;
+}
+
+/* File upload area */
+.upload-area {
+    border: 2px dashed #667eea;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    background: #f8f9ff;
+    margin: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: #764ba2;
+    background: #f0f2ff;
+}
+
+.upload-area.dragover {
+    border-color: #764ba2;
+    background: #e8ebff;
+    transform: scale(1.02);
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0.25rem;
+}
+
+.status-processing {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-complete {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Workflow step indicators */
+.workflow-steps {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.workflow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.workflow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    right: -50%;
+    width: 100%;
+    height: 2px;
+    background: #dee2e6;
+    z-index: 1;
+}
+
+.workflow-step.active::after {
+    background: #667eea;
+}
+
+.workflow-step.completed::after {
+    background: #28a745;
+}
+
+.step-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.875rem;
+    z-index: 2;
+    position: relative;
+}
+
+.step-icon.pending {
+    background: #dee2e6;
+    color: #6c757d;
+}
+
+.step-icon.active {
+    background: #667eea;
+    color: white;
+}
+
+.step-icon.completed {
+    background: #28a745;
+    color: white;
+}
+
+.step-label {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+.step-label.active {
+    color: #667eea;
+    font-weight: 500;
+}
+
+.step-label.completed {
+    color: #28a745;
+    font-weight: 500;
+}
+
+/* Analysis results styling */
+.analysis-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+}
+
+.analysis-section h3 {
+    color: #667eea;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+/* Proposal cards */
+.proposal-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.proposal-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.proposal-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.proposal-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Loading animation */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .message.user {
+        margin-left: 0.5rem;
+    }
+    
+    .message.assistant {
+        margin-right: 0.5rem;
+    }
+    
+    .workflow-steps {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .workflow-step:not(:last-child)::after {
+        display: none;
+    }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #764ba2;
+}
