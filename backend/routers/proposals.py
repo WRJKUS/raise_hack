@@ -10,8 +10,8 @@ import uuid
 from datetime import datetime
 
 from backend.models.schemas import (
-    ProposalResponse, 
-    FileUploadResponse, 
+    ProposalResponse,
+    FileUploadResponse,
     ErrorResponse,
     AnalysisResult
 )
@@ -38,7 +38,7 @@ async def upload_proposal(file: UploadFile = File(...)):
                 status_code=400,
                 detail="Only PDF files are allowed"
             )
-        
+
         # Validate file size
         file_content = await file.read()
         if len(file_content) > settings.max_file_size:
@@ -46,32 +46,32 @@ async def upload_proposal(file: UploadFile = File(...)):
                 status_code=400,
                 detail=f"File size exceeds maximum allowed size of {settings.max_file_size} bytes"
             )
-        
+
         # Process the PDF
         result = pdf_processor.process_proposal_pdf(file_content, file.filename)
-        
+
         if not result["success"]:
             raise HTTPException(
                 status_code=400,
                 detail=f"Failed to process PDF: {result['error']}"
             )
-        
+
         # Store the proposal
         proposal = result["proposal"]
         uploaded_proposals[proposal["id"]] = proposal
-        
+
         # Save file to disk for reference
         file_path = os.path.join(settings.upload_directory, f"{proposal['id']}_{file.filename}")
         with open(file_path, "wb") as f:
             f.write(file_content)
-        
+
         return FileUploadResponse(
             filename=file.filename,
             file_id=proposal["id"],
             size=len(file_content),
             message="File uploaded and processed successfully"
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -98,9 +98,9 @@ async def list_proposals():
                 category=proposal_data["category"],
                 created_at=datetime.fromisoformat(proposal_data["processed_at"])
             ))
-        
+
         return proposals
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -119,7 +119,7 @@ async def get_proposal(proposal_id: str):
                 status_code=404,
                 detail="Proposal not found"
             )
-        
+
         proposal_data = uploaded_proposals[proposal_id]
         return ProposalResponse(
             id=proposal_data["id"],
@@ -130,7 +130,7 @@ async def get_proposal(proposal_id: str):
             category=proposal_data["category"],
             created_at=datetime.fromisoformat(proposal_data["processed_at"])
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -151,17 +151,17 @@ async def delete_proposal(proposal_id: str):
                 status_code=404,
                 detail="Proposal not found"
             )
-        
+
         # Remove from storage
         proposal_data = uploaded_proposals.pop(proposal_id)
-        
+
         # Remove file from disk
         file_path = os.path.join(settings.upload_directory, f"{proposal_id}_{proposal_data['filename']}")
         if os.path.exists(file_path):
             os.remove(file_path)
-        
+
         return {"message": "Proposal deleted successfully"}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -175,19 +175,44 @@ async def delete_proposal(proposal_id: str):
 async def get_analysis_results(session_id: str = None):
     """
     Get analysis results for proposals
-    This endpoint provides mock data that matches the frontend expectations
+    Uses AI analysis when available, falls back to mock data
     """
     try:
         # If no proposals uploaded, return empty list
         if not uploaded_proposals:
             return []
-        
-        # Generate mock analysis results based on uploaded proposals
+
+        # Import here to avoid circular imports
+        from backend.routers.analysis import analysis_sessions
+        from backend.services.workflow import workflow_service
+
+        # Try to get AI analysis results first
+        ai_results = None
+        if session_id and session_id in analysis_sessions:
+            workflow_state = analysis_sessions[session_id]["workflow_state"]
+            ai_results = workflow_service.get_structured_analysis_results(workflow_state)
+
+        # If we have AI results, use them
+        if ai_results:
+            print(f"✅ Using AI analysis results for {len(ai_results)} proposals")
+            return [AnalysisResult(**result) for result in ai_results]
+
+        # Otherwise, check if we have any completed analysis sessions
+        for session_data in analysis_sessions.values():
+            workflow_state = session_data["workflow_state"]
+            if workflow_state.get("structured_analysis"):
+                ai_results = workflow_service.get_structured_analysis_results(workflow_state)
+                if ai_results:
+                    print(f"✅ Using AI analysis results from existing session for {len(ai_results)} proposals")
+                    return [AnalysisResult(**result) for result in ai_results]
+
+        # Fall back to mock data if no AI analysis available
+        print("⚠️ No AI analysis available, using mock data")
         results = []
         for i, (proposal_id, proposal_data) in enumerate(uploaded_proposals.items()):
-            # Generate mock scores (in production, these would come from actual AI analysis)
+            # Generate mock scores
             base_score = 85 + (i * 3) % 15  # Vary scores between 85-100
-            
+
             result = AnalysisResult(
                 id=proposal_id,
                 vendor=proposal_data["title"].replace("Proposal: ", ""),
@@ -211,10 +236,11 @@ async def get_analysis_results(session_id: str = None):
                 ]
             )
             results.append(result)
-        
+
         return results
-        
+
     except Exception as e:
+        print(f"❌ Error in get_analysis_results: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve analysis results: {str(e)}"

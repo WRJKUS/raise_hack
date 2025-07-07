@@ -149,8 +149,11 @@ class ApiClient {
     return this.request(`/proposals/${id}`, { method: 'DELETE' });
   }
 
-  async getAnalysisResults(): Promise<AnalysisResult[]> {
-    return this.request('/proposals/analysis/results');
+  async getAnalysisResults(sessionId?: string): Promise<AnalysisResult[]> {
+    const url = sessionId
+      ? `/proposals/analysis/results?session_id=${encodeURIComponent(sessionId)}`
+      : '/proposals/analysis/results';
+    return this.request(url);
   }
 
   // Analysis endpoints

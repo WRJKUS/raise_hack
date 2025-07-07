@@ -13,6 +13,7 @@ const ComparativeAnalysis = () => {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Load analysis results on component mount
@@ -45,10 +46,11 @@ const ComparativeAnalysis = () => {
     }
   };
 
-  const loadAnalysisResults = async () => {
+  const loadAnalysisResults = async (sessionId?: string) => {
     try {
-      const results = await apiClient.getAnalysisResults();
+      const results = await apiClient.getAnalysisResults(sessionId || currentSessionId);
       setAnalysisResults(results);
+      console.log(`Loaded ${results.length} analysis results${sessionId ? ` for session ${sessionId}` : ''}`);
     } catch (error) {
       console.error('Failed to load analysis results:', error);
       // Don't show error toast on initial load if no results exist
@@ -137,14 +139,20 @@ const ComparativeAnalysis = () => {
 
     try {
       // Start the analysis workflow
-      await apiClient.startAnalysis();
+      const analysisResponse = await apiClient.startAnalysis();
+      const sessionId = analysisResponse.session_id;
 
-      // Load the updated analysis results
-      await loadAnalysisResults();
+      // Store the session ID for future requests
+      setCurrentSessionId(sessionId);
+
+      console.log(`Analysis started with session ID: ${sessionId}`);
+
+      // Load the updated analysis results with the session ID
+      await loadAnalysisResults(sessionId);
 
       toast({
         title: "Analysis completed",
-        description: "All proposals have been analyzed and scored",
+        description: "All proposals have been analyzed and scored using AI",
       });
     } catch (error) {
       console.error('Analysis failed:', error);
