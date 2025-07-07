@@ -10,81 +10,85 @@ An AI-powered proposal comparison and analysis platform that integrates React fr
 - **Vector Database**: Chroma
 - **PDF Processing**: PyPDF2 + pdfplumber
 
-## 🚀 Quick Start
+## 🐳 Development Container Setup (Recommended)
+
+For the easiest development experience, use the provided devcontainer configuration which includes all necessary tools and dependencies.
 
 ### Prerequisites
 
-1. **API Keys**: You'll need API keys for:
-   - Groq API (for LLM)
-   - OpenAI API (for embeddings)
+1. **Docker**: Install Docker Desktop
+2. **VS Code**: Install Visual Studio Code with the Dev Containers extension
+3. **API Keys**: You'll need the same API keys mentioned above
 
-2. **Environment Setup**:
+### Setup Steps
+
+1. **Copy devcontainer configuration**:
+
    ```bash
-   # Copy environment template
-   cp .env.example .env
-
-   # Edit .env and add your API keys
-   GROQ_API_KEY=your_groq_api_key_here
-   OPENAI_API_KEY=your_openai_api_key_here
+   cp devcontainer.json.example .devcontainer/devcontainer.json
    ```
 
-### Backend Setup
+2. **Configure API Keys**: Edit `.devcontainer/devcontainer.json` and add your API keys:
 
-1. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
+   ```json
+   "containerEnv": {
+     "GROQ_API_KEY": "your_groq_api_key_here",
+     "OPENAI_API_KEY": "your_openai_api_key_here"
+   }
    ```
 
-2. **Start Backend Server**:
+3. **Open in Dev Container**:
+   - Open the project in VS Code
+   - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac)
+   - Type "Dev Containers: Reopen in Container"
+   - Select the command and wait for the container to build
+
+### What's Included
+
+The devcontainer provides:
+
+- **Python 3.11** with all backend dependencies pre-installed
+- **Node.js 18** with frontend dependencies pre-installed
+- **VS Code extensions** for Python, TypeScript, Tailwind CSS, and more
+- **Port forwarding** for backend (8000), frontend (8080), and Jupyter (8888)
+- **Git and GitHub CLI** for version control
+- **Automatic setup** that runs `pip install` and `npm install` on container creation
+
+### Running the Application
+
+Once the devcontainer is running:
+
+1. **Start Backend** (in VS Code terminal):
+
    ```bash
    python start_backend.py
    ```
 
-   The API will be available at:
-   - API: http://localhost:8000
-   - Documentation: http://localhost:8000/api/docs
-   - Health Check: http://localhost:8000/api/health
-
-### Frontend Setup
-
-**Option 1: Using the startup script (Recommended)**
-```bash
-python start_frontend.py
-```
-
-**Option 2: Manual setup**
-1. **Navigate to Frontend Directory**:
+2. **Start Frontend** (in a new terminal):
    ```bash
-   cd leonardos-rfq-alchemy-main
+   python start_frontend.py
    ```
 
-2. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start Development Server**:
-   ```bash
-   npm run dev
-   ```
-
-   The frontend will be available at: http://localhost:8080
+The application will be available at the same URLs as the manual setup, with ports automatically forwarded from the container.
 
 ## 🎯 Features
 
 ### 1. Proposal Upload & Analysis
+
 - Upload PDF proposal documents
 - Automatic text extraction and processing
 - AI-powered comparative analysis
 - Scoring and ranking system
 
 ### 2. Interactive Chat Assistant
+
 - Ask questions about uploaded proposals
 - Context-aware responses using vector search
 - Session-based conversation history
 - Real-time proposal insights
 
 ### 3. LangGraph Workflow
+
 - Multi-node AI workflow for proposal processing
 - Vector store integration with Chroma
 - Conditional workflow execution
@@ -113,6 +117,7 @@ python start_frontend.py
 ## 🔧 API Endpoints
 
 ### Proposals
+
 - `POST /api/proposals/upload` - Upload proposal PDF
 - `GET /api/proposals/list` - List all proposals
 - `GET /api/proposals/{id}` - Get specific proposal
@@ -120,11 +125,13 @@ python start_frontend.py
 - `GET /api/proposals/analysis/results` - Get analysis results
 
 ### Analysis
+
 - `POST /api/analysis/start` - Start proposal analysis
 - `GET /api/analysis/status/{session_id}` - Get analysis status
 - `GET /api/analysis/result/{session_id}` - Get analysis result
 
 ### Chat
+
 - `POST /api/chat/message` - Send chat message
 - `GET /api/chat/history/{session_id}` - Get chat history
 - `DELETE /api/chat/session/{session_id}` - Clear chat session
@@ -138,6 +145,7 @@ python test_integration.py
 ```
 
 This will test:
+
 - Backend health check
 - File upload functionality
 - Proposal analysis workflow
@@ -157,10 +165,6 @@ This will test:
 Key configuration options in `.env`:
 
 ```bash
-# API Keys
-GROQ_API_KEY=your_groq_api_key
-OPENAI_API_KEY=your_openai_api_key
-
 # LLM Settings
 DEFAULT_LLM_MODEL=llama-3.1-8b-instant
 TEMPERATURE=0.1
@@ -178,16 +182,19 @@ UPLOAD_DIRECTORY=./uploads
 ## 🐛 Troubleshooting
 
 ### Backend Issues
+
 - **API Keys**: Ensure GROQ_API_KEY and OPENAI_API_KEY are set
 - **Dependencies**: Run `pip install -r requirements.txt`
 - **Port Conflicts**: Backend runs on port 8000, frontend on 8080
 
 ### Frontend Issues
+
 - **API Connection**: Check if backend is running at http://localhost:8000
 - **CORS**: Backend is configured to allow frontend origin
 - **Dependencies**: Run `npm install` in frontend directory
 
 ### Common Errors
+
 - **"Vector store not initialized"**: Upload proposals before starting analysis
 - **"No proposals available"**: Upload PDF files first
 - **"API connection failed"**: Ensure backend server is running
