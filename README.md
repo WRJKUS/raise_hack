@@ -22,7 +22,7 @@ An AI-powered proposal comparison and analysis platform that integrates React fr
    ```bash
    # Copy environment template
    cp .env.example .env
-   
+
    # Edit .env and add your API keys
    GROQ_API_KEY=your_groq_api_key_here
    OPENAI_API_KEY=your_openai_api_key_here
@@ -39,7 +39,7 @@ An AI-powered proposal comparison and analysis platform that integrates React fr
    ```bash
    python start_backend.py
    ```
-   
+
    The API will be available at:
    - API: http://localhost:8000
    - Documentation: http://localhost:8000/api/docs
@@ -47,6 +47,12 @@ An AI-powered proposal comparison and analysis platform that integrates React fr
 
 ### Frontend Setup
 
+**Option 1: Using the startup script (Recommended)**
+```bash
+python start_frontend.py
+```
+
+**Option 2: Manual setup**
 1. **Navigate to Frontend Directory**:
    ```bash
    cd leonardos-rfq-alchemy-main
@@ -61,7 +67,7 @@ An AI-powered proposal comparison and analysis platform that integrates React fr
    ```bash
    npm run dev
    ```
-   
+
    The frontend will be available at: http://localhost:8080
 
 ## 🎯 Features
@@ -100,6 +106,7 @@ An AI-powered proposal comparison and analysis platform that integrates React fr
 │   │   └── pages/            # Page components
 ├── requirements.txt           # Python dependencies
 ├── start_backend.py          # Backend startup script
+├── start_frontend.py         # Frontend startup script
 └── test_integration.py       # Integration tests
 ```
 

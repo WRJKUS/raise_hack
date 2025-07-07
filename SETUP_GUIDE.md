@@ -65,6 +65,12 @@ This guide will walk you through setting up the complete AI-powered proposal com
 
 ### Step 3: Frontend Setup
 
+**Option 1: Using the startup script (Recommended)**
+```bash
+python start_frontend.py
+```
+
+**Option 2: Manual setup**
 1. **Navigate to frontend directory**:
    ```bash
    cd leonardos-rfq-alchemy-main

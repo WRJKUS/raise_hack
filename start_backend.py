@@ -83,11 +83,6 @@ def main():
     if not check_environment():
         sys.exit(1)
 
-    # Install dependencies
-    # if not install_dependencies():
-    #     print("⚠️  Continuing without installing dependencies...")
-    #     print("   Make sure you have installed the requirements manually")
-
     # Create directories
     create_directories()
 
