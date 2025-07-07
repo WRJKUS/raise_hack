@@ -21,6 +21,7 @@ def check_node_environment():
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("❌ Node.js is not installed or not available in PATH")
         print("Please install Node.js from https://nodejs.org/")
+        print("💡 If using dev container, rebuild the container to install Node.js")
         return False
 
     # Check npm
@@ -32,6 +33,7 @@ def check_node_environment():
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("❌ npm is not installed or not available in PATH")
         print("Please install npm (usually comes with Node.js)")
+        print("💡 If using dev container, rebuild the container to install npm")
         return False
 
     return True
@@ -158,7 +160,7 @@ def main():
         print("  python start_frontend.py")
         print("  python start_frontend.py --help")
         print("\nRequirements:")
-        print("• Node.js 16+ and npm")
+        print("• Node.js 16+ and npm (automatically installed in dev container)")
         print("• Run from the project root directory")
         return
 
