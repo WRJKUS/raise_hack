@@ -23,8 +23,8 @@
         "ms-toolsai.jupyter-keymap",
         "bradlc.vscode-tailwindcss",
         "esbenp.prettier-vscode",
-        "        "ms-vscode.vscode-typescript-next",
-        "augment.vscode-augment""
+        "ms-vscode.vscode-typescript-next",
+        "augment.vscode-augment"
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",
