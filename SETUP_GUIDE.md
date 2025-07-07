@@ -5,7 +5,7 @@ This guide will walk you through setting up the complete AI-powered proposal com
 ## 📋 Prerequisites
 
 ### 1. System Requirements
-- Python 3.11+ 
+- Python 3.11+
 - Node.js 18+
 - Git
 
@@ -27,7 +27,7 @@ This guide will walk you through setting up the complete AI-powered proposal com
    # Required API Keys
    GROQ_API_KEY=your_groq_api_key_here
    OPENAI_API_KEY=your_openai_api_key_here
-   
+
    # Optional: Customize other settings
    DEFAULT_LLM_MODEL=llama-3.1-8b-instant
    TEMPERATURE=0.1
@@ -210,8 +210,8 @@ curl -X POST -H "Content-Type: application/json" \
 
 ### Backend Deployment
 ```bash
-# Install production server
-pip install gunicorn
+# Install all dependencies (including gunicorn for production)
+pip install -r requirements.txt
 
 # Run with gunicorn
 gunicorn -w 4 -k uvicorn.workers.UvicornWorker backend.main:app --bind 0.0.0.0:8000

@@ -35,7 +35,7 @@
   },
 
   // Use 'postCreateCommand' to run commands after the container is created
-  "postCreateCommand": "python --version && pip --version && pip install --user jupyter notebook jupyterlab pandas numpy matplotlib seaborn scikit-learn black pylint ipykernel langgraph langchain langchain-core langchain-community langchain-openai langchain-groq langsmith && python -m ipykernel install --user --name=python3",
+  "postCreateCommand": "python --version && pip --version && pip install --user -r requirements.txt && python -m ipykernel install --user --name=python3",
 
   // Comment out to connect as root instead
   "remoteUser": "vscode"
