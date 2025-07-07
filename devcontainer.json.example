@@ -1,11 +1,15 @@
 {
-  "name": "Python Jupyter Environment",
+  "name": "Leonardo's RFQ Alchemy Full Stack Environment",
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
 
   // Features to add to the dev container
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "nodeGypDependencies": true,
+      "version": "18"
+    }
   },
 
   // Configure tool-specific properties
@@ -16,17 +20,30 @@
         "ms-python.vscode-pylance",
         "ms-toolsai.jupyter",
         "ms-toolsai.jupyter-renderers",
-        "ms-toolsai.jupyter-keymap"
+        "ms-toolsai.jupyter-keymap",
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "        "ms-vscode.vscode-typescript-next",
+        "augment.vscode-augment""
       ],
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "jupyter.askForKernelRestart": false
+        "jupyter.askForKernelRestart": false,
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "tailwindCSS.includeLanguages": {
+          "typescript": "javascript",
+          "typescriptreact": "javascript"
+        }
       }
     }
   },
 
   // Use 'forwardPorts' to make a list of ports available locally
-  "forwardPorts": [8888],
+  "forwardPorts": [8000, 8080, 8888],
 
   // Environment variables
   "containerEnv": {
@@ -35,7 +52,7 @@
   },
 
   // Use 'postCreateCommand' to run commands after the container is created
-  "postCreateCommand": "python --version && pip --version && pip install --user jupyter notebook jupyterlab pandas numpy matplotlib seaborn scikit-learn black pylint ipykernel langgraph langchain langchain-core langchain-community langchain-openai langchain-groq langsmith && python -m ipykernel install --user --name=python3",
+  "postCreateCommand": "python --version && pip --version && node --version && npm --version && pip install --user -r requirements.txt && python -m ipykernel install --user --name=python3 && cd leonardos-rfq-alchemy-main && npm install",
 
   // Comment out to connect as root instead
   "remoteUser": "vscode"
