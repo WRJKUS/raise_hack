@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 from dotenv import load_dotenv
 
-from backend.routers import proposals, chat, analysis
+from backend.routers import proposals, chat, analysis, rfp_optimization
 from backend.core.config import settings
 
 # Load environment variables
@@ -27,18 +27,24 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080", "http://localhost:3000", "*"],  # React dev server
+    allow_origins=["http://localhost:8080",
+                   "http://localhost:3000", "*"],  # React dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routers
-app.include_router(proposals.router, prefix="/api/proposals", tags=["proposals"])
+app.include_router(
+    proposals.router, prefix="/api/proposals", tags=["proposals"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(analysis.router, prefix="/api/analysis", tags=["analysis"])
+app.include_router(rfp_optimization.router,
+                   prefix="/api/rfp-optimization", tags=["rfp-optimization"])
 
 # Health check endpoint
+
+
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint"""
@@ -49,6 +55,8 @@ async def health_check():
     }
 
 # Root endpoint
+
+
 @app.get("/")
 async def root():
     """Root endpoint with API information"""

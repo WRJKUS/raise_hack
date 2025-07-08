@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, FileText, MessageSquare, CheckCircle, Calculator, TrendingUp, Clock, Users } from 'lucide-react';
+import { BarChart3, FileText, MessageSquare, CheckCircle, Calculator, TrendingUp, Clock, Users, Settings } from 'lucide-react';
 import ComparativeAnalysis from '@/components/agents/ComparativeAnalysis';
 import ChatAssistant from '@/components/agents/ChatAssistant';
 import ApprovalProcess from '@/components/agents/ApprovalProcess';
 import QuoteManagement from '@/components/agents/QuoteManagement';
+import RFPOptimization from '@/components/agents/RFPOptimization';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -38,7 +39,7 @@ const Index = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-white border border-gray-200 p-1 rounded-lg">
+          <TabsList className="grid w-full grid-cols-6 bg-white border border-gray-200 p-1 rounded-lg">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Overview
@@ -46,6 +47,10 @@ const Index = () => {
             <TabsTrigger value="analysis" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Analysis Agent
+            </TabsTrigger>
+            <TabsTrigger value="rfp-optimization" className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              RFP Optimization
             </TabsTrigger>
             <TabsTrigger value="chat" className="flex items-center gap-2">
               <MessageSquare className="w-4 h-4" />
@@ -125,7 +130,7 @@ const Index = () => {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-blue-600 h-2 rounded-full" style={{ width: '67%' }}></div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Approval Workflows</span>
                       <span className="text-sm text-gray-600">3/5 approved</span>
@@ -133,7 +138,7 @@ const Index = () => {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-green-600 h-2 rounded-full" style={{ width: '60%' }}></div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Quote Requests</span>
                       <span className="text-sm text-gray-600">21/28 responses</span>
@@ -149,6 +154,10 @@ const Index = () => {
 
           <TabsContent value="analysis">
             <ComparativeAnalysis />
+          </TabsContent>
+
+          <TabsContent value="rfp-optimization">
+            <RFPOptimization />
           </TabsContent>
 
           <TabsContent value="chat">
