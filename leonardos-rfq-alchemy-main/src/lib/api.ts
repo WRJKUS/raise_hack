@@ -51,6 +51,78 @@ export interface AnalysisResponse {
   proposals_count: number;
 }
 
+// RFP Optimization interfaces
+export interface RFPDimensionAnalysis {
+  score: number;
+  max_score: number;
+  findings: string[];
+  recommendations: string[];
+}
+
+export interface RFPTimelineAnalysis extends RFPDimensionAnalysis {
+  timeline_assessment_score: number;
+  recommended_timeline_adjustments: string[];
+  risk_factors: string[];
+  historical_comparison: string[];
+}
+
+export interface RFPRequirementsAnalysis extends RFPDimensionAnalysis {
+  clarity_score: number;
+  requirement_gaps: string[];
+  suggested_clarifications: string[];
+  deliverable_alignment: string;
+}
+
+export interface RFPCostStructureAnalysis extends RFPDimensionAnalysis {
+  cost_structure_assessment: string;
+  change_management_readiness: string;
+  missing_cost_categories: string[];
+  recommended_contingencies: string[];
+}
+
+export interface RFPTCOAnalysis extends RFPDimensionAnalysis {
+  tco_completeness_score: number;
+  missing_cost_elements: string[];
+  lifecycle_cost_projections: string[];
+  budget_realism_check: string;
+}
+
+export interface RFPOptimizationAnalysis {
+  analysis_id: string;
+  rfp_document_id: string;
+  analysis_timestamp: string;
+  overall_score: number;
+  max_score: number;
+  timeline_feasibility: RFPTimelineAnalysis;
+  requirements_clarity: RFPRequirementsAnalysis;
+  cost_flexibility: RFPCostStructureAnalysis;
+  tco_analysis: RFPTCOAnalysis;
+  priority_actions: string[];
+  implementation_timeline: {
+    immediate: string[];
+    short_term: string[];
+    long_term: string[];
+  };
+  executive_summary: string;
+}
+
+export interface RFPOptimizationResponse {
+  analysis: RFPOptimizationAnalysis;
+  session_id: string;
+  processing_time_seconds: number;
+}
+
+export interface RFPActionItem {
+  id: string;
+  title: string;
+  description: string;
+  priority: 'immediate' | 'short_term' | 'long_term';
+  dimension: string;
+  completed: boolean;
+  created_at: string;
+  completed_at?: string;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -197,6 +269,122 @@ class ApiClient {
 
   async clearChatSession(sessionId: string): Promise<{ message: string }> {
     return this.request(`/chat/session/${sessionId}`, { method: 'DELETE' });
+  }
+
+  // RFP Optimization endpoints
+  async uploadRFPDocument(file: File): Promise<{
+    rfp_document_id: string;
+    filename: string;
+    title: string;
+    file_size: number;
+    message: string;
+  }> {
+    console.log(`API: Starting RFP upload for ${file.name}`);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.log('API: RFP upload timeout triggered after 30 seconds');
+      controller.abort();
+    }, 30000); // 30 second timeout for RFP uploads
+
+    try {
+      console.log('API: Making RFP upload request...');
+      const startTime = Date.now();
+
+      const response = await fetch(`${this.baseUrl}/rfp-optimization/upload-rfp`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      const endTime = Date.now();
+      clearTimeout(timeoutId);
+      console.log(`API: RFP upload response received after ${endTime - startTime}ms - Status: ${response.status}`);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API: RFP upload failed with error data:', errorData);
+        throw new Error(errorData.detail || `RFP upload failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log(`API: RFP upload completed for ${file.name}:`, result);
+      return result;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      console.error('API: RFP upload error:', error);
+
+      if (error.name === 'AbortError') {
+        throw new Error('RFP upload timeout - please try again');
+      }
+      throw error;
+    }
+  }
+
+  async analyzeRFPDocument(rfpDocumentId: string, sessionId?: string): Promise<RFPOptimizationResponse> {
+    return this.request('/rfp-optimization/analyze', {
+      method: 'POST',
+      body: JSON.stringify({
+        rfp_document_id: rfpDocumentId,
+        session_id: sessionId,
+        include_historical_data: true
+      }),
+    });
+  }
+
+  async getRFPAnalysis(sessionId: string): Promise<RFPOptimizationResponse> {
+    return this.request(`/rfp-optimization/analysis/${sessionId}`);
+  }
+
+  async getRFPOptimizationSessions(): Promise<{
+    sessions: Array<{
+      session_id: string;
+      rfp_document_id: string;
+      created_at: string;
+      overall_score: number;
+      max_score: number;
+      executive_summary: string;
+    }>;
+    total_count: number;
+  }> {
+    return this.request('/rfp-optimization/sessions');
+  }
+
+  async getRFPActionItems(sessionId: string): Promise<{
+    session_id: string;
+    action_items: {
+      immediate: RFPActionItem[];
+      short_term: RFPActionItem[];
+      long_term: RFPActionItem[];
+    };
+    total_count: number;
+    completed_count: number;
+  }> {
+    return this.request(`/rfp-optimization/action-items/${sessionId}`);
+  }
+
+  async updateRFPActionItem(sessionId: string, itemId: string, completed: boolean): Promise<{
+    message: string;
+    item_id: string;
+    completed: boolean;
+  }> {
+    return this.request(`/rfp-optimization/action-items/${sessionId}/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ completed, notes: null }),
+    });
+  }
+
+  async getRFPOptimizationHealth(): Promise<{
+    status: string;
+    agent_status: string;
+    active_sessions: number;
+    total_action_items: number;
+    timestamp: string;
+  }> {
+    return this.request('/rfp-optimization/health');
   }
 }
 
