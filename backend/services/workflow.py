@@ -139,18 +139,28 @@ IMPORTANT:
 - Ensure JSON is valid and complete"""
         )
 
+        # Updated question template for conversational, non-JSON/code responses
         self.question_template = PromptTemplate.from_template(
-            """You are an expert proposal analyst. A user has asked the following question
-about the proposals: "{user_question}"
+            '''You are an AI assistant helping evaluate project proposals for AI Leonardos hackathon.
 
-Based on the following relevant proposal information, provide a comprehensive and helpful answer:
+ANALYZED PROPOSAL:
+{analysis_result}
 
-{context_info}
+ALL PROPOSALS FOR COMPARISON:
+{all_proposals}
 
-Previous analysis context:
-{previous_analysis}
+BUDGET CONTEXT:
+- Total Budget: {total_budget}
+- Remaining Budget: {remaining_budget}
 
-Please provide a detailed, accurate response that directly addresses the user's question."""
+CONVERSATION HISTORY:
+{conversation_history}
+
+USER QUESTION: {user_question}
+
+Provide a helpful, concise response about the proposal analysis, comparisons, budget allocation, or any aspect of the evaluation. Be specific and reference actual data when possible. ONLY use and reference data that actually exists in the proposals, analysis, or context above. DO NOT invent, estimate, or make up any information that is not present in the provided data.
+
+Your response should be conversational and informative. DO NOT include JSON formatting in your response.'''
         )
 
     def _build_workflow(self):
@@ -376,19 +386,21 @@ Description: {proposal['content'][:500]}..."""
                 k=settings.vector_search_k
             )
 
-            # Prepare context from relevant documents
-            context_info = []
-            for doc in relevant_docs:
-                context_info.append(f"""Proposal: {doc.metadata['title']}
-                Content: {doc.page_content}...
-                Budget: ${doc.metadata['budget']:,}
-                Timeline: {doc.metadata['timeline_months']} months""")
+            # Prepare values for the new prompt
+            analysis_result = state['structured_analysis'] if state['structured_analysis'] else state['current_analysis']
+            all_proposals = json.dumps(state['proposals'], indent=2)
+            total_budget = sum([p.get('budget', 0) for p in state['proposals']])
+            remaining_budget = total_budget  # Placeholder, update as needed
+            conversation_history = json.dumps(state['conversation_history'], indent=2)
 
             # Use PromptTemplate for structured response prompt
             response_prompt = self.question_template.invoke({
-                "user_question": state['user_question'],
-                "context_info": "\n\n".join(context_info),
-                "previous_analysis": state['current_analysis'][:500] + "..." if len(state['current_analysis']) > 500 else state['current_analysis']
+                "analysis_result": json.dumps(analysis_result, indent=2) if analysis_result else "",
+                "all_proposals": all_proposals,
+                "total_budget": f"${total_budget:,.2f}",
+                "remaining_budget": f"${remaining_budget:,.2f}",
+                "conversation_history": conversation_history,
+                "user_question": state['user_question']
             })
 
             # Generate response
@@ -475,6 +487,12 @@ Errors Encountered: {'Yes' if state['error_message'] else 'No'}"""
         if not self.llm or not self.embeddings:
             error_state = self.create_initial_state(proposals, session_id)
             error_state['error_message'] = "API keys not configured. Please set GROQ_API_KEY and OPENAI_API_KEY in your .env file."
+            return error_state
+
+        # Check for empty proposals
+        if not proposals or len(proposals) == 0:
+            error_state = self.create_initial_state(proposals, session_id)
+            error_state['error_message'] = "No proposals have been submitted yet. Please add at least one proposal to begin the analysis."
             return error_state
 
         # Create initial state
