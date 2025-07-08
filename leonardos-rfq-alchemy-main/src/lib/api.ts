@@ -16,6 +16,25 @@ export interface Proposal {
   created_at: string;
 }
 
+export interface RFPMismatch {
+  type: string;
+  severity: string;
+  message: string;
+  rfp_requirement: string;
+  proposal_value: string;
+  impact: string;
+}
+
+export interface RFPAlignment {
+  overall_alignment_score: number;
+  budget_alignment: number;
+  timeline_alignment: number;
+  technical_alignment: number;
+  scope_alignment: number;
+  mismatches: RFPMismatch[];
+  alignment_summary: string;
+}
+
 export interface AnalysisResult {
   id: string;
   vendor: string;
@@ -30,6 +49,7 @@ export interface AnalysisResult {
   phone: string;
   strengths: string[];
   concerns: string[];
+  rfp_alignment?: RFPAlignment;
 }
 
 export interface ChatMessage {
@@ -229,10 +249,13 @@ class ApiClient {
   }
 
   // Analysis endpoints
-  async startAnalysis(sessionId?: string): Promise<AnalysisResponse> {
+  async startAnalysis(rfpDocumentId?: string, sessionId?: string): Promise<AnalysisResponse> {
     return this.request('/analysis/start', {
       method: 'POST',
-      body: JSON.stringify({ session_id: sessionId }),
+      body: JSON.stringify({
+        session_id: sessionId,
+        rfp_document_id: rfpDocumentId
+      }),
     });
   }
 

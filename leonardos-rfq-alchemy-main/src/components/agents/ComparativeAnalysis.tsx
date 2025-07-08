@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Upload, FileText, Star, DollarSign, Mail, Building, Calendar } from 'lucide-react';
+import { Upload, FileText, Star, DollarSign, Mail, Building, Calendar, CheckCircle, Target, AlertTriangle, AlertCircle, Info, TrendingDown, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiClient, AnalysisResult } from '@/lib/api';
+import { apiClient, AnalysisResult, RFPMismatch, RFPAlignment } from '@/lib/api';
 
 const ComparativeAnalysis = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -14,6 +14,16 @@ const ComparativeAnalysis = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+
+  // RFP document upload state
+  const [uploadedRFPId, setUploadedRFPId] = useState<string | null>(null);
+  const [isUploadingRFP, setIsUploadingRFP] = useState(false);
+  const [rfpDocumentInfo, setRfpDocumentInfo] = useState<{
+    filename: string;
+    title: string;
+    file_size: number;
+  } | null>(null);
+
   const { toast } = useToast();
 
   // Load analysis results on component mount
@@ -124,6 +134,46 @@ const ComparativeAnalysis = () => {
     }
   };
 
+  const handleRFPFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: "Invalid file type",
+        description: "Please select a PDF file for the RFP document",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Immediately upload the selected file
+    setIsUploadingRFP(true);
+    try {
+      const result = await apiClient.uploadRFPDocument(file);
+      setUploadedRFPId(result.rfp_document_id);
+      setRfpDocumentInfo({
+        filename: result.filename,
+        title: result.title,
+        file_size: result.file_size
+      });
+
+      toast({
+        title: "RFP document uploaded successfully",
+        description: `${result.filename} is ready to be used as baseline for comparative analysis`,
+      });
+    } catch (error) {
+      console.error('RFP upload failed:', error);
+      toast({
+        title: "RFP upload failed",
+        description: error.message || "Failed to upload RFP document",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingRFP(false);
+    }
+  };
+
   const startAnalysis = async () => {
     const uploadedCount = uploadedFiles.filter(f => f.status === 'uploaded').length;
     if (uploadedCount === 0) {
@@ -138,21 +188,21 @@ const ComparativeAnalysis = () => {
     setIsAnalyzing(true);
 
     try {
-      // Start the analysis workflow
-      const analysisResponse = await apiClient.startAnalysis();
+      // Start the analysis workflow with RFP context if available
+      const analysisResponse = await apiClient.startAnalysis(uploadedRFPId);
       const sessionId = analysisResponse.session_id;
 
       // Store the session ID for future requests
       setCurrentSessionId(sessionId);
 
-      console.log(`Analysis started with session ID: ${sessionId}`);
+      console.log(`Analysis started with session ID: ${sessionId}${uploadedRFPId ? ` and RFP context: ${uploadedRFPId}` : ''}`);
 
       // Load the updated analysis results with the session ID
       await loadAnalysisResults(sessionId);
 
       toast({
         title: "Analysis completed",
-        description: "All proposals have been analyzed and scored using AI",
+        description: `All proposals have been analyzed and scored using AI${uploadedRFPId ? ' against your uploaded RFP document' : ''}`,
       });
     } catch (error) {
       console.error('Analysis failed:', error);
@@ -178,6 +228,48 @@ const ComparativeAnalysis = () => {
     return 'destructive';
   };
 
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return <AlertCircle className="w-4 h-4 text-red-600" />;
+      case 'high':
+        return <AlertTriangle className="w-4 h-4 text-orange-600" />;
+      case 'medium':
+        return <AlertTriangle className="w-4 h-4 text-yellow-600" />;
+      case 'low':
+        return <Info className="w-4 h-4 text-blue-600" />;
+      default:
+        return <Info className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return 'border-red-200 bg-red-50';
+      case 'high':
+        return 'border-orange-200 bg-orange-50';
+      case 'medium':
+        return 'border-yellow-200 bg-yellow-50';
+      case 'low':
+        return 'border-blue-200 bg-blue-50';
+      default:
+        return 'border-gray-200 bg-gray-50';
+    }
+  };
+
+  const getAlignmentIcon = (score: number) => {
+    if (score >= 80) return <TrendingUp className="w-4 h-4 text-green-600" />;
+    if (score >= 60) return <TrendingUp className="w-4 h-4 text-yellow-600" />;
+    return <TrendingDown className="w-4 h-4 text-red-600" />;
+  };
+
+  const getAlignmentColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
   return (
     <div className="space-y-6">
       <Card className="bg-white shadow-sm">
@@ -191,7 +283,76 @@ const ComparativeAnalysis = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* File Upload Section */}
+          {/* RFP Document Upload Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-600" />
+              <h3 className="text-lg font-medium text-gray-900">Step 1: Upload RFP Document (Optional)</h3>
+            </div>
+
+
+            {!uploadedRFPId ? (
+              <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors bg-blue-50">
+                <FileText className="w-10 h-10 text-blue-400 mx-auto mb-3" />
+                <h4 className="text-md font-medium text-gray-900 mb-2">Upload RFP Document</h4>
+                <p className="text-gray-600 mb-4 text-sm">Select your RFP PDF file to use as baseline for analysis</p>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleRFPFileSelect}
+                  className="hidden"
+                  id="rfp-file-upload"
+                />
+                <Button
+                  asChild
+                  disabled={isUploadingRFP}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <label htmlFor="rfp-file-upload" className="cursor-pointer">
+                    {isUploadingRFP ? 'Uploading...' : 'Choose RFP File'}
+                  </label>
+                </Button>
+              </div>
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <div className="flex-1">
+                    <p className="font-medium text-green-800">RFP Document Uploaded</p>
+                    <p className="text-sm text-green-700">
+                      {rfpDocumentInfo?.title} ({(rfpDocumentInfo?.file_size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setUploadedRFPId(null);
+                      setRfpDocumentInfo(null);
+                    }}
+                    className="text-green-700 border-green-300 hover:bg-green-100"
+                  >
+                    Change RFP
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-gray-200"></div>
+
+          {/* Proposal Upload Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Upload className="w-5 h-5 text-gray-600" />
+              <h3 className="text-lg font-medium text-gray-900">Step 2: Upload Proposal Documents</h3>
+            </div>
+            <p className="text-sm text-gray-600">
+              Upload vendor proposal PDF files for comparative analysis{uploadedRFPId ? ' against your RFP document' : ''}.
+            </p>
+          </div>
+
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
             <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Proposal Documents</h3>
@@ -235,32 +396,48 @@ const ComparativeAnalysis = () => {
           )}
 
           {/* Analysis Controls */}
-          <div className="flex items-center gap-4">
-            <div className="flex gap-2">
-              <Button
-                onClick={startAnalysis}
-                disabled={isAnalyzing || isUploading || uploadedFiles.filter(f => f.status === 'uploaded').length === 0}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {isAnalyzing ? 'Analyzing...' : isUploading ? 'Uploading...' : 'Start AI Analysis'}
-              </Button>
-              {isUploading && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-green-600" />
+              <h3 className="text-lg font-medium text-gray-900">Step 3: Run Comparative Analysis</h3>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex gap-2">
                 <Button
-                  onClick={() => {
-                    console.log('Manual reset of upload state');
-                    setIsUploading(false);
-                  }}
-                  variant="outline"
-                  className="text-red-600 border-red-600"
+                  onClick={startAnalysis}
+                  disabled={isAnalyzing || isUploading || isUploadingRFP || uploadedFiles.filter(f => f.status === 'uploaded').length === 0}
+                  className="bg-green-600 hover:bg-green-700"
                 >
-                  Reset Upload
+                  {isAnalyzing ? 'Analyzing...' : isUploading ? 'Uploading...' : isUploadingRFP ? 'Uploading RFP...' : 'Start AI Analysis'}
                 </Button>
+                {isUploading && (
+                  <Button
+                    onClick={() => {
+                      console.log('Manual reset of upload state');
+                      setIsUploading(false);
+                    }}
+                    variant="outline"
+                    className="text-red-600 border-red-600"
+                  >
+                    Reset Upload
+                  </Button>
+                )}
+              </div>
+              {isAnalyzing && (
+                <div className="flex-1 max-w-md">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Analyzing proposals{uploadedRFPId ? ' against your RFP document' : ' using general best practices'}...
+                  </p>
+                  <Progress value={75} className="w-full" />
+                </div>
               )}
             </div>
-            {isAnalyzing && (
-              <div className="flex-1 max-w-md">
-                <p className="text-sm text-gray-600 mb-2">Analyzing proposals...</p>
-                <Progress value={75} className="w-full" />
+
+            {uploadedRFPId && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-800">
+                  <strong>RFP Context:</strong> Analysis will compare proposals against your uploaded RFP document for more accurate scoring and recommendations.
+                </p>
               </div>
             )}
           </div>
@@ -271,6 +448,72 @@ const ComparativeAnalysis = () => {
       {analysisResults.length > 0 && (
         <div className="space-y-6">
           <h3 className="text-xl font-semibold text-gray-900">Analysis Results</h3>
+
+          {/* RFP Mismatch Summary */}
+          {uploadedRFPId && analysisResults.some(result => result.rfp_alignment) && (
+            <Card className="border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-900">
+                  <FileText className="w-5 h-5" />
+                  RFP Alignment Summary
+                </CardTitle>
+                <CardDescription className="text-blue-700">
+                  Analysis based on your uploaded RFP document requirements
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(() => {
+                  const totalMismatches = analysisResults.reduce((total, result) =>
+                    total + (result.rfp_alignment?.mismatches?.length || 0), 0);
+                  const criticalMismatches = analysisResults.reduce((total, result) =>
+                    total + (result.rfp_alignment?.mismatches?.filter(m => m.severity === 'critical').length || 0), 0);
+                  const highMismatches = analysisResults.reduce((total, result) =>
+                    total + (result.rfp_alignment?.mismatches?.filter(m => m.severity === 'high').length || 0), 0);
+                  const avgAlignment = Math.round(analysisResults.reduce((total, result) =>
+                    total + (result.rfp_alignment?.overall_alignment_score || 0), 0) / analysisResults.length);
+
+                  return (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="text-center p-3 bg-white rounded-lg border">
+                          <div className={`font-bold text-2xl ${getAlignmentColor(avgAlignment)}`}>
+                            {avgAlignment}%
+                          </div>
+                          <div className="text-sm text-gray-600">Avg. Alignment</div>
+                        </div>
+                        <div className="text-center p-3 bg-white rounded-lg border">
+                          <div className="font-bold text-2xl text-gray-800">{totalMismatches}</div>
+                          <div className="text-sm text-gray-600">Total Issues</div>
+                        </div>
+                        <div className="text-center p-3 bg-white rounded-lg border">
+                          <div className="font-bold text-2xl text-red-600">{criticalMismatches}</div>
+                          <div className="text-sm text-gray-600">Critical</div>
+                        </div>
+                        <div className="text-center p-3 bg-white rounded-lg border">
+                          <div className="font-bold text-2xl text-orange-600">{highMismatches}</div>
+                          <div className="text-sm text-gray-600">High Priority</div>
+                        </div>
+                      </div>
+
+                      {(criticalMismatches > 0 || highMismatches > 0) && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                            <span className="font-medium text-yellow-800">Attention Required</span>
+                          </div>
+                          <p className="text-sm text-yellow-700">
+                            {criticalMismatches > 0 && `${criticalMismatches} critical mismatch(es) detected. `}
+                            {highMismatches > 0 && `${highMismatches} high-priority issue(s) identified. `}
+                            Review individual proposals below for detailed alignment analysis.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          )}
 
           {analysisResults.map((result) => (
             <Card key={result.id} className="bg-white shadow-sm">
@@ -354,6 +597,99 @@ const ComparativeAnalysis = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* RFP Alignment Analysis */}
+                {result.rfp_alignment && uploadedRFPId && (
+                  <div className="space-y-4">
+                    <h4 className="font-medium text-blue-800 mb-3 flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      RFP Alignment Analysis
+                    </h4>
+
+                    {/* Overall Alignment Score */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-blue-900">Overall RFP Alignment</span>
+                        <div className="flex items-center gap-2">
+                          {getAlignmentIcon(result.rfp_alignment.overall_alignment_score)}
+                          <span className={`font-bold ${getAlignmentColor(result.rfp_alignment.overall_alignment_score)}`}>
+                            {result.rfp_alignment.overall_alignment_score}%
+                          </span>
+                        </div>
+                      </div>
+                      <Progress value={result.rfp_alignment.overall_alignment_score} className="w-full mb-2" />
+                      <p className="text-sm text-blue-800">{result.rfp_alignment.alignment_summary}</p>
+                    </div>
+
+                    {/* Alignment Breakdown */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className={`font-bold text-lg ${getAlignmentColor(result.rfp_alignment.budget_alignment)}`}>
+                          {result.rfp_alignment.budget_alignment}%
+                        </div>
+                        <div className="text-xs text-gray-600">Budget</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className={`font-bold text-lg ${getAlignmentColor(result.rfp_alignment.timeline_alignment)}`}>
+                          {result.rfp_alignment.timeline_alignment}%
+                        </div>
+                        <div className="text-xs text-gray-600">Timeline</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className={`font-bold text-lg ${getAlignmentColor(result.rfp_alignment.technical_alignment)}`}>
+                          {result.rfp_alignment.technical_alignment}%
+                        </div>
+                        <div className="text-xs text-gray-600">Technical</div>
+                      </div>
+                      <div className="text-center p-3 bg-gray-50 rounded-lg">
+                        <div className={`font-bold text-lg ${getAlignmentColor(result.rfp_alignment.scope_alignment)}`}>
+                          {result.rfp_alignment.scope_alignment}%
+                        </div>
+                        <div className="text-xs text-gray-600">Scope</div>
+                      </div>
+                    </div>
+
+                    {/* Mismatches */}
+                    {result.rfp_alignment.mismatches && result.rfp_alignment.mismatches.length > 0 && (
+                      <div className="space-y-3">
+                        <h5 className="font-medium text-red-800 flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4" />
+                          Detected Mismatches ({result.rfp_alignment.mismatches.length})
+                        </h5>
+                        {result.rfp_alignment.mismatches.map((mismatch, index) => (
+                          <div key={index} className={`border rounded-lg p-3 ${getSeverityColor(mismatch.severity)}`}>
+                            <div className="flex items-start gap-2">
+                              {getSeverityIcon(mismatch.severity)}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-medium text-sm capitalize">{mismatch.type}</span>
+                                  <Badge variant="outline" className="text-xs">
+                                    {mismatch.severity}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-gray-800 mb-2">{mismatch.message}</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                  <div>
+                                    <span className="font-medium">RFP Requirement:</span>
+                                    <p className="text-gray-600">{mismatch.rfp_requirement}</p>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium">Proposal Value:</span>
+                                    <p className="text-gray-600">{mismatch.proposal_value}</p>
+                                  </div>
+                                </div>
+                                <div className="mt-2">
+                                  <span className="font-medium text-xs">Impact:</span>
+                                  <p className="text-xs text-gray-600">{mismatch.impact}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Strengths and Concerns */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

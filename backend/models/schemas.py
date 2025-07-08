@@ -30,6 +30,37 @@ class ProposalResponse(ProposalBase):
         from_attributes = True
 
 
+class RFPMismatch(BaseModel):
+    """Model for RFP-Proposal mismatch detection"""
+    type: str = Field(...,
+                      description="Type of mismatch: budget, timeline, technical, scope")
+    severity: str = Field(...,
+                          description="Severity: low, medium, high, critical")
+    message: str = Field(...,
+                         description="Human-readable mismatch description")
+    rfp_requirement: str = Field(..., description="What the RFP specified")
+    proposal_value: str = Field(..., description="What the proposal offers")
+    impact: str = Field(..., description="Potential impact of this mismatch")
+
+
+class RFPAlignment(BaseModel):
+    """Model for RFP-Proposal alignment analysis"""
+    overall_alignment_score: int = Field(..., ge=0, le=100,
+                                         description="Overall alignment score (0-100)")
+    budget_alignment: int = Field(..., ge=0, le=100,
+                                  description="Budget alignment score")
+    timeline_alignment: int = Field(..., ge=0, le=100,
+                                    description="Timeline alignment score")
+    technical_alignment: int = Field(..., ge=0, le=100,
+                                     description="Technical requirements alignment score")
+    scope_alignment: int = Field(..., ge=0, le=100,
+                                 description="Scope alignment score")
+    mismatches: List[RFPMismatch] = Field(
+        default=[], description="List of detected mismatches")
+    alignment_summary: str = Field(...,
+                                   description="Summary of alignment analysis")
+
+
 class AnalysisResult(BaseModel):
     """Model for analysis results"""
     id: str = Field(..., description="Analysis ID")
@@ -45,6 +76,8 @@ class AnalysisResult(BaseModel):
     phone: str = Field(..., description="Phone number")
     strengths: List[str] = Field(..., description="List of strengths")
     concerns: List[str] = Field(..., description="List of concerns")
+    rfp_alignment: Optional[RFPAlignment] = Field(
+        None, description="RFP alignment analysis when RFP is provided")
 
 
 class ChatMessage(BaseModel):
@@ -73,6 +106,8 @@ class ChatResponse(BaseModel):
 class AnalysisRequest(BaseModel):
     """Model for analysis requests"""
     session_id: Optional[str] = Field(None, description="Session ID")
+    rfp_document_id: Optional[str] = Field(
+        None, description="RFP document ID for context-aware analysis")
 
 
 class AnalysisResponse(BaseModel):

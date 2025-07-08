@@ -18,6 +18,11 @@ from datetime import datetime
 import uuid
 
 from backend.core.config import settings
+from backend.services.mismatch_detector import mismatch_detector
+
+# Import uploaded_proposals for RFP context access
+# Note: This creates a circular import, but it's needed for accessing RFP documents
+# In production, this should be refactored to use a proper database or service layer
 
 
 class ProposalAgentState(TypedDict):
@@ -31,6 +36,10 @@ class ProposalAgentState(TypedDict):
     continue_conversation: bool
     error_message: str
     session_id: str
+    # RFP document ID for context-aware analysis
+    rfp_document_id: Optional[str]
+    # RFP document data for context-aware analysis
+    rfp_data: Optional[Dict[str, Any]]
 
 
 class ProposalWorkflowService:
@@ -51,7 +60,8 @@ class ProposalWorkflowService:
         try:
             # Initialize ChatGroq model
             if not settings.groq_api_key or settings.groq_api_key == "your_groq_api_key_here":
-                print("⚠️  GROQ_API_KEY not set - workflow will not function until API keys are configured")
+                print(
+                    "⚠️  GROQ_API_KEY not set - workflow will not function until API keys are configured")
                 self.llm = None
             else:
                 self.llm = ChatGroq(
@@ -63,7 +73,8 @@ class ProposalWorkflowService:
 
             # Initialize embeddings model
             if not settings.openai_api_key or settings.openai_api_key == "your_openai_api_key_here":
-                print("⚠️  OPENAI_API_KEY not set - workflow will not function until API keys are configured")
+                print(
+                    "⚠️  OPENAI_API_KEY not set - workflow will not function until API keys are configured")
                 self.embeddings = None
             else:
                 self.embeddings = OpenAIEmbeddings(
@@ -87,6 +98,8 @@ class ProposalWorkflowService:
         self.analysis_template = PromptTemplate.from_template(
             """You are an expert business analyst. Please provide a comprehensive comparison
 of the following {num_proposals} proposals.
+
+{rfp_context}
 
 For EACH proposal, provide a detailed analysis in the following JSON format:
 
@@ -162,7 +175,8 @@ Please provide a detailed, accurate response that directly addresses the user's 
             # Add nodes to the graph
             self.workflow.add_node("setup", self._setup_node)
             self.workflow.add_node("comparison", self._comparison_node)
-            self.workflow.add_node("interactive_loop", self._interactive_loop_node)
+            self.workflow.add_node(
+                "interactive_loop", self._interactive_loop_node)
             self.workflow.add_node("end", self._end_node)
 
             # Define the workflow edges
@@ -219,7 +233,8 @@ Please provide a detailed, accurate response that directly addresses the user's 
 
     def _create_fallback_structure(self, analysis_text: str, proposals: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Create fallback structured analysis when JSON parsing fails"""
-        print(f"Creating fallback structure from {len(analysis_text)} characters of analysis text")
+        print(
+            f"Creating fallback structure from {len(analysis_text)} characters of analysis text")
         structured_proposals = []
 
         for i, proposal in enumerate(proposals):
@@ -227,7 +242,8 @@ Please provide a detailed, accurate response that directly addresses the user's 
             base_score = 85 + (i * 3) % 15
 
             # Try to extract vendor name from title
-            vendor_name = proposal.get('title', '').replace('Proposal: ', '').strip()
+            vendor_name = proposal.get('title', '').replace(
+                'Proposal: ', '').strip()
             if not vendor_name:
                 vendor_name = f"Vendor {i + 1}"
 
@@ -318,6 +334,28 @@ Please provide a detailed, accurate response that directly addresses the user's 
         try:
             print("📊 Generating initial proposal comparison...")
 
+            # Prepare RFP context if available
+            rfp_context = ""
+            if state.get('rfp_data'):
+                rfp_data = state['rfp_data']
+                rfp_context = f"""
+RFP DOCUMENT CONTEXT:
+Title: {rfp_data.get('title', 'Unknown RFP')}
+Budget: ${rfp_data.get('budget', 0):,}
+Timeline: {rfp_data.get('timeline_months', 0)} months
+Requirements: {rfp_data.get('content', '')[:1000]}...
+
+ANALYSIS INSTRUCTIONS:
+- Compare each proposal against the RFP requirements above
+- Score proposals based on how well they meet the RFP criteria
+- Consider budget alignment with RFP budget expectations
+- Evaluate timeline feasibility against RFP timeline requirements
+- Assess technical capability to deliver RFP requirements
+- Identify gaps between proposal offerings and RFP needs
+"""
+            else:
+                rfp_context = "No RFP document provided. Analyze proposals using general best practices and industry standards."
+
             # Prepare proposal summaries for analysis
             proposal_summaries = []
             for proposal in state['proposals']:
@@ -332,7 +370,8 @@ Description: {proposal['content'][:500]}..."""
             # Use PromptTemplate for structured prompt creation
             analysis_prompt = self.analysis_template.invoke({
                 "num_proposals": len(state['proposals']),
-                "proposal_summaries": "\n\n".join(proposal_summaries)
+                "proposal_summaries": "\n\n".join(proposal_summaries),
+                "rfp_context": rfp_context
             })
 
             # Generate analysis using LLM
@@ -343,14 +382,16 @@ Description: {proposal['content'][:500]}..."""
             state['current_analysis'] = response.content
 
             # Parse structured analysis
-            structured_analysis = self._parse_structured_analysis(response.content, state['proposals'])
+            structured_analysis = self._parse_structured_analysis(
+                response.content, state['proposals'])
             state['structured_analysis'] = structured_analysis
 
             state['error_message'] = ""
 
             print("✅ Initial comparison analysis completed")
             if structured_analysis:
-                print(f"✅ Structured analysis parsed for {len(structured_analysis.get('proposals', []))} proposals")
+                print(
+                    f"✅ Structured analysis parsed for {len(structured_analysis.get('proposals', []))} proposals")
             else:
                 print("⚠️ Could not parse structured analysis")
 
@@ -365,7 +406,8 @@ Description: {proposal['content'][:500]}..."""
     def _interactive_loop_node(self, state: ProposalAgentState) -> ProposalAgentState:
         """Interactive Loop Node: Allow users to ask questions about proposals."""
         try:
-            print(f"💬 Processing user question: {state['user_question'][:50]}...")
+            print(
+                f"💬 Processing user question: {state['user_question'][:50]}...")
 
             if not state['vector_store']:
                 raise ValueError("Vector store not initialized")
@@ -464,12 +506,18 @@ Errors Encountered: {'Yes' if state['error_message'] else 'No'}"""
             conversation_history=[],
             continue_conversation=True,
             error_message="",
-            session_id=session_id
+            session_id=session_id,
+            rfp_document_id=None,
+            rfp_data=None
         )
 
-    def run_initial_analysis(self, proposals: List[Dict[str, Any]], session_id: str = None) -> ProposalAgentState:
+    def run_initial_analysis(self, proposals: List[Dict[str, Any]], session_id: str = None, rfp_data: Dict[str, Any] = None) -> ProposalAgentState:
         """Run the initial setup and comparison analysis."""
         print("🚀 Starting proposal analysis workflow...")
+
+        if rfp_data:
+            print(
+                f"📋 Using RFP document context: {rfp_data.get('title', 'Unknown RFP')}")
 
         # Check if models are initialized
         if not self.llm or not self.embeddings:
@@ -477,8 +525,11 @@ Errors Encountered: {'Yes' if state['error_message'] else 'No'}"""
             error_state['error_message'] = "API keys not configured. Please set GROQ_API_KEY and OPENAI_API_KEY in your .env file."
             return error_state
 
-        # Create initial state
+        # Create initial state with RFP context
         initial_state = self.create_initial_state(proposals, session_id)
+        initial_state['rfp_document_id'] = rfp_data.get(
+            'id') if rfp_data else None
+        initial_state['rfp_data'] = rfp_data
 
         # Run setup and comparison nodes
         state = self._setup_node(initial_state)
@@ -525,6 +576,41 @@ Errors Encountered: {'Yes' if state['error_message'] else 'No'}"""
                 if not original_proposal:
                     continue
 
+                # Perform RFP alignment analysis if RFP data is available
+                rfp_alignment = None
+                if state.get('rfp_data'):
+                    try:
+                        # Debug: Print RFP and proposal data structure
+                        print(
+                            f"🔍 DEBUG: RFP data keys: {list(state['rfp_data'].keys())}")
+                        print(
+                            f"🔍 DEBUG: RFP budget: {state['rfp_data'].get('budget', 'NOT_FOUND')}")
+                        print(
+                            f"🔍 DEBUG: RFP timeline: {state['rfp_data'].get('timeline_months', 'NOT_FOUND')}")
+                        print(
+                            f"🔍 DEBUG: Proposal data keys: {list(original_proposal.keys())}")
+                        print(
+                            f"🔍 DEBUG: Proposal budget: {original_proposal.get('budget', 'NOT_FOUND')}")
+                        print(
+                            f"🔍 DEBUG: Proposal timeline: {original_proposal.get('timeline_months', 'NOT_FOUND')}")
+                        print(
+                            f"🔍 DEBUG: Proposal title: {original_proposal.get('title', 'NOT_FOUND')}")
+
+                        rfp_alignment = mismatch_detector.analyze_proposal_alignment(
+                            state['rfp_data'], original_proposal
+                        )
+                        print(
+                            f"✅ RFP alignment analysis completed for {original_proposal.get('title', 'Unknown')}")
+                        print(
+                            f"🔍 DEBUG: Alignment scores - Overall: {rfp_alignment.overall_alignment_score}%, Budget: {rfp_alignment.budget_alignment}%, Timeline: {rfp_alignment.timeline_alignment}%, Technical: {rfp_alignment.technical_alignment}%, Scope: {rfp_alignment.scope_alignment}%")
+                        print(
+                            f"🔍 DEBUG: Mismatches found: {len(rfp_alignment.mismatches)}")
+                    except Exception as e:
+                        print(
+                            f"⚠️ RFP alignment analysis failed for {original_proposal.get('title', 'Unknown')}: {e}")
+                        import traceback
+                        traceback.print_exc()
+
                 # Create AnalysisResult-compatible structure
                 result = {
                     "id": proposal_analysis.get('proposal_id'),
@@ -539,7 +625,8 @@ Errors Encountered: {'Yes' if state['error_message'] else 'No'}"""
                     "contact": proposal_analysis.get('contact_info', {}).get('email', 'contact@vendor.com'),
                     "phone": proposal_analysis.get('contact_info', {}).get('phone', '+1 (555) 123-4567'),
                     "strengths": proposal_analysis.get('strengths', []),
-                    "concerns": proposal_analysis.get('concerns', [])
+                    "concerns": proposal_analysis.get('concerns', []),
+                    "rfp_alignment": rfp_alignment.dict() if rfp_alignment else None
                 }
                 results.append(result)
 

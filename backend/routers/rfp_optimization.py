@@ -264,14 +264,15 @@ async def upload_rfp_document(file: UploadFile = File(...)):
         rfp_id = str(uuid.uuid4())
 
         # Store the processed RFP data
+        proposal_data = processed_data["proposal"]
         rfp_data = {
             "id": rfp_id,
             "filename": file.filename,
-            "title": processed_data.get("title", file.filename),
-            "content": processed_data.get("content", ""),
-            "budget": processed_data.get("budget", 0),
-            "timeline_months": processed_data.get("timeline_months", 0),
-            "category": processed_data.get("category", "RFP"),
+            "title": proposal_data.get("title", file.filename),
+            "content": proposal_data.get("content", ""),
+            "budget": proposal_data.get("budget", 0),
+            "timeline_months": proposal_data.get("timeline_months", 0),
+            "category": proposal_data.get("category", "RFP"),
             "created_at": datetime.now(),
             "file_size": len(file_content)
         }
