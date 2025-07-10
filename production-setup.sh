@@ -27,11 +27,9 @@ apt-get install -y \
     python3-venv \
     nodejs \
     npm \
-    nginx \
     ufw \
     curl \
-    git \
-    supervisor
+    git
 
 # Install PM2 globally
 echo "📦 Installing PM2..."

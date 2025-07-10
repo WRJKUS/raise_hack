@@ -1,0 +1,41 @@
+# Minimal requirements for Leonardo's RFQ Alchemy
+# Optimized for small servers (1GB RAM)
+
+# Core FastAPI and server
+fastapi==0.115.14
+uvicorn==0.35.0
+gunicorn==23.0.0
+python-dotenv==1.1.1
+python-multipart==0.0.18
+
+# Pydantic for data validation
+pydantic==2.11.7
+pydantic-settings==2.10.1
+
+# LangChain core
+langchain==0.3.26
+langchain-core==0.3.68
+langchain-openai==0.3.27
+langchain-groq==0.3.5
+
+# Vector database
+chromadb==1.0.15
+langchain-chroma==0.2.4
+
+# LLM APIs
+openai==1.93.0
+groq==0.29.0
+
+# PDF processing
+PyPDF2==3.0.1
+pdfplumber==0.11.7
+
+# File handling
+aiofiles==24.1.0
+
+# HTTP client
+httpx==0.28.1
+
+# Additional utilities
+tenacity==9.1.2
+tiktoken==0.9.0
