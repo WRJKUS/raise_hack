@@ -1,0 +1,20 @@
+[Unit]
+Description=Leonardo's RFQ Alchemy Platform
+After=network.target
+Wants=network.target
+
+[Service]
+Type=forking
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/rfq-alchemy
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/pm2 start ecosystem.config.js --no-daemon
+ExecReload=/usr/bin/pm2 reload ecosystem.config.js
+ExecStop=/usr/bin/pm2 delete all
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

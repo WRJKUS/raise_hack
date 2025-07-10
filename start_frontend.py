@@ -8,6 +8,7 @@ import sys
 import subprocess
 from pathlib import Path
 
+
 def check_node_environment():
     """Check if Node.js and npm are installed and available"""
     print("🔍 Checking Node.js environment...")
@@ -15,7 +16,7 @@ def check_node_environment():
     # Check Node.js
     try:
         result = subprocess.run(["node", "--version"],
-                              capture_output=True, text=True, check=True)
+                                capture_output=True, text=True, check=True)
         node_version = result.stdout.strip()
         print(f"✅ Node.js found: {node_version}")
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -27,7 +28,7 @@ def check_node_environment():
     # Check npm
     try:
         result = subprocess.run(["npm", "--version"],
-                              capture_output=True, text=True, check=True)
+                                capture_output=True, text=True, check=True)
         npm_version = result.stdout.strip()
         print(f"✅ npm found: {npm_version}")
     except (subprocess.CalledProcessError, FileNotFoundError):
@@ -37,6 +38,7 @@ def check_node_environment():
         return False
 
     return True
+
 
 def check_frontend_directory():
     """Check if frontend directory exists"""
@@ -60,6 +62,7 @@ def check_frontend_directory():
 
     print("✅ Frontend directory structure validated")
     return True
+
 
 def install_dependencies():
     """Install Node.js dependencies if node_modules doesn't exist"""
@@ -89,7 +92,8 @@ def install_dependencies():
 
     except subprocess.CalledProcessError as e:
         print(f"❌ Failed to install dependencies: {e}")
-        print("Try running 'npm install' manually in the leonardos-rfq-alchemy-main directory")
+        print(
+            "Try running 'npm install' manually in the leonardos-rfq-alchemy-main directory")
         return False
     except Exception as e:
         print(f"❌ Unexpected error during dependency installation: {e}")
@@ -100,6 +104,7 @@ def install_dependencies():
             os.chdir(original_cwd)
         except:
             pass
+
 
 def check_port_availability():
     """Check if the default port (8080) is available"""
@@ -114,10 +119,11 @@ def check_port_availability():
         print("The development server will try to use an alternative port")
         return True  # Vite will handle port conflicts automatically
 
+
 def start_development_server():
     """Start the React development server"""
     print("🚀 Starting React development server...")
-    print("📍 Frontend will be available at: http://localhost:8080")
+    print("📍 Frontend will be available at: http://localhost:3002")
     print("🔄 Press Ctrl+C to stop the server")
     print("⏳ Starting up... (this may take a moment)")
 
@@ -134,7 +140,8 @@ def start_development_server():
         print("\n👋 Development server stopped")
     except subprocess.CalledProcessError as e:
         print(f"❌ Failed to start development server: {e}")
-        print("Try running 'npm run dev' manually in the leonardos-rfq-alchemy-main directory")
+        print(
+            "Try running 'npm run dev' manually in the leonardos-rfq-alchemy-main directory")
     except Exception as e:
         print(f"❌ Unexpected error: {e}")
     finally:
@@ -143,6 +150,7 @@ def start_development_server():
             os.chdir(original_cwd)
         except:
             pass
+
 
 def main():
     """Main startup function"""
@@ -155,7 +163,7 @@ def main():
         print("• Checks if Node.js and npm are installed")
         print("• Validates the frontend directory structure")
         print("• Installs dependencies if node_modules is missing")
-        print("• Starts the Vite development server on http://localhost:8080")
+        print("• Starts the Vite development server on http://localhost:3002")
         print("\nUsage:")
         print("  python start_frontend.py")
         print("  python start_frontend.py --help")
@@ -185,6 +193,7 @@ def main():
 
     # Start development server
     start_development_server()
+
 
 if __name__ == "__main__":
     main()
