@@ -15,7 +15,7 @@ module.exports = {
     },
     {
       name: 'rfq-alchemy-frontend',
-      script: "./build/index.js",
+      script: "./leonardos-rfq-alchemy-main/build/index.js",
       watch: false,
       env: {
         NODE_ENV: "development",
