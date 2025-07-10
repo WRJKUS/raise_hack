@@ -38,9 +38,21 @@ mkdir -p logs
 mkdir -p uploads
 mkdir -p chroma_proposal_db
 
+# Create Python virtual environment
+echo "🐍 Creating Python virtual environment..."
+if [ ! -d "venv" ]; then
+    python3 -m venv venv
+    echo "✅ Virtual environment created"
+fi
+
+# Activate virtual environment and upgrade pip
+echo "📦 Setting up virtual environment..."
+source venv/bin/activate
+pip install --upgrade pip
+
 # Install only essential Python packages first
 echo "📦 Installing essential Python packages..."
-pip3 install --no-cache-dir \
+pip install --no-cache-dir \
     fastapi \
     uvicorn \
     gunicorn \
@@ -51,7 +63,7 @@ pip3 install --no-cache-dir \
 
 # Install packages in smaller batches to avoid memory issues
 echo "📦 Installing core dependencies (batch 1/3)..."
-pip3 install --no-cache-dir \
+pip install --no-cache-dir \
     langchain \
     langchain-core \
     langchain-openai \
@@ -60,12 +72,12 @@ pip3 install --no-cache-dir \
     groq
 
 echo "📦 Installing vector database dependencies (batch 2/3)..."
-pip3 install --no-cache-dir \
+pip install --no-cache-dir \
     chromadb \
     langchain-chroma
 
 echo "📦 Installing PDF processing dependencies (batch 3/3)..."
-pip3 install --no-cache-dir \
+pip install --no-cache-dir \
     PyPDF2 \
     pdfplumber \
     aiofiles
@@ -93,7 +105,7 @@ module.exports = {
   apps: [
     {
       name: 'rfq-alchemy-backend',
-      script: 'python3',
+      script: './venv/bin/python',
       args: '-m uvicorn backend.main:app --host 0.0.0.0 --port 8000',
       cwd: process.cwd(),
       interpreter: 'none',
